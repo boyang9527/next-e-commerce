@@ -1,0 +1,60 @@
+name: Deploy to AWS Amplify
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AWS_REGION: us-east-1
+  AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID_BETA }}
+  AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Trigger and monitor deployment - PreProd
+        run: |
+          echo "Starting deployment..."
+          JOB_ID=$(aws amplify start-job \
+            --app-id ${{ env.AMPLIFY_APP_ID }} \
+            --branch-name master \
+            --job-type RELEASE \
+            --region ${{ env.AWS_REGION }} \
+            --query 'jobSummary.jobId' \
+            --output text)
+          
+          echo "Monitoring job $JOB_ID..."
+          
+          while true; do
+            STATUS=$(aws amplify get-job \
+              --app-id ${{ env.AMPLIFY_APP_ID }} \
+              --branch-name master \
+              --job-id $JOB_ID \
+              --region ${{ env.AWS_REGION }} \
+              --query 'job.summary.status' \
+              --output text)
+            
+            echo "$(date): Status = $STATUS"
+            
+            if [[ "$STATUS" == "SUCCEED" ]]; then
+              echo "✅ Deployment succeeded!"
+              exit 0
+            elif [[ "$STATUS" == "FAILED" || "$STATUS" == "CANCELLED" ]]; then
+              echo "❌ Deployment $STATUS"
+              exit 1
+            fi
+            
+            sleep 30
+          done
