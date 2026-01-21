@@ -3,13 +3,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        - nvm install 18
-        - nvm use 18
+        - nvm install 16
+        - nvm use 16
         - node --version
         - yarn install
     build:
       commands:
-        - NODE_OPTIONS='--openssl-legacy-provider' yarn build
+        - yarn build
   artifacts:
     baseDirectory: .next
     files:
