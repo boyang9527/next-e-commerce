@@ -6,10 +6,10 @@ frontend:
         - nvm install 16
         - nvm use 16
         - node --version
-        - yarn install
+        - npm install
     build:
       commands:
-        - yarn build
+        - npm run build
   artifacts:
     baseDirectory: .next
     files:
