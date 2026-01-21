@@ -9,7 +9,7 @@ frontend:
         - yarn install
     build:
       commands:
-        - yarn build
+        - NODE_OPTIONS='--openssl-legacy-provider' yarn build
   artifacts:
     baseDirectory: .next
     files:
